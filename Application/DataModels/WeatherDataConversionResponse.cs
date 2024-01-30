@@ -2,6 +2,7 @@
 
 public class WeatherDataConversionResponse
 {
+    public string? zip { get; set; }
     public string name { get; set; }
     //public Dictionary<string, string> local_names { get; set; }
     public double lat { get; set; }

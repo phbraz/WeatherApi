@@ -22,26 +22,11 @@ public class GeoCodingConversion
 
         return client;
     }
-
-    public async Task<string> ConvertUsingPostCode(string postCode, string countryCode)
-    {
-        var openWeatherApiKey = _configuration["OpenWeatherAPI:key"];
-        var requestUrl =
-            $"http://api.openweathermap.org/geo/1.0/zip?zip={postCode},{countryCode}&appid={openWeatherApiKey}";
-
-        var client = CreateClient();
-        var response = await client.GetAsync(requestUrl);
-        response.EnsureSuccessStatusCode();
-        var responseBody = await response.Content.ReadAsStringAsync();
-        
-        return responseBody;
-    }
-
-    public async Task<WeatherDataConversionResponse[]> ConvertUsingLocationName(string cityName, string countryCode)
+    
+    public async Task<WeatherDataConversionResponse[]> ConvertUsingLocationName(WeatherDataRequest request)
     {
         var openWeatherApi = _configuration["OpenWeatherAPI:key"];
-        var requestUrl =
-            $"geo/1.0/direct?q={cityName},{countryCode}&appid={openWeatherApi}";
+        var requestUrl = $"geo/1.0/direct?q={request.CityName},{request.CountryCode}&appid={openWeatherApi}";
         
         var client = CreateClient();
         var response = await client.GetAsync(requestUrl);
@@ -49,6 +34,20 @@ public class GeoCodingConversion
         var responseBody = await response.Content.ReadAsStringAsync();
         
         var weatherDataResponse = JsonConvert.DeserializeObject<WeatherDataConversionResponse[]>(responseBody);
+        return weatherDataResponse;
+    }
+
+    public async Task<WeatherDataConversionResponse> ConvertUsingPostCode(WeatherDataRequest request)
+    {
+        var openWeatherApi = _configuration["OpenWeatherAPI:key"];
+        var requestUrl = $"geo/1.0/zip?zip={request.PostCode},{request.CountryCode}&appid={openWeatherApi}";
+        var client = CreateClient();
+        
+        var response = await client.GetAsync(requestUrl);
+        response.EnsureSuccessStatusCode();
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var weatherDataResponse = JsonConvert.DeserializeObject<WeatherDataConversionResponse>(responseBody);
+        
         return weatherDataResponse;
     }
 }

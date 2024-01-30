@@ -3,18 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WeatherAPI.Controllers;
 
-public class MainBase : ControllerBase
+public class MainBase(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator _mediator;
-
-    public MainBase(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-    
     protected async Task<TResponse> SenQuery<TRequest, TResponse>(TRequest query, CancellationToken cancellationToken) where TRequest 
         : IRequest<TResponse>
     {
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 }

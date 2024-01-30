@@ -7,10 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace WeatherAPI.Controllers
 {
     [Route("WeatherForecast")]
-    public class WeatherForecastController : MainBase
+    public class WeatherForecastController(IMediator mediator) : MainBase(mediator)
     {
-        public WeatherForecastController(IMediator mediator) : base(mediator) { }
-        
         [HttpPost("GetCurrentForecast")]
         public async Task<WeatherDataResponse> FetchCurrentForecast([FromBody] GetCurrentForecastQuery query, CancellationToken token)
             => await SenQuery<GetCurrentForecastQuery, WeatherDataResponse>(query, token);

@@ -1,6 +1,5 @@
 ﻿using Application.DataModels;
 using Application.Interfaces;
-using Application.Queries.WeatherForecast;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
@@ -10,11 +9,13 @@ public class CurrentWeatherData : IWeatherRequest
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    private readonly string _openWeatherApiKey = null!;
     
     public CurrentWeatherData(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _openWeatherApiKey = _configuration["OpenWeatherAPI:key"];
     }
 
     private HttpClient CreateClient()
@@ -27,22 +28,37 @@ public class CurrentWeatherData : IWeatherRequest
     
     public async Task<WeatherDataResponse> GetWeatherDataAsync(WeatherDataRequest request)
     {
-        var geoConversion = new GeoCodingConversion(_httpClientFactory, _configuration);
-        if (string.IsNullOrEmpty(request.CityName) && string.IsNullOrEmpty(request.CountryCode) && string.IsNullOrEmpty(request.PostCode))
-        {
-            throw new ArgumentException("At least one parameter must be provided");
-        }
 
-        var conversion = await geoConversion.ConvertUsingLocationName(request.CityName, request.CountryCode);
-        var openApiKey = _configuration["OpenWeatherAPI:key"];
-        var requestUrl = $"data/2.5/weather?lat={conversion.FirstOrDefault().lat}&lon={conversion.FirstOrDefault().lon}&appid={openApiKey}&units=metric";
+        var result = !string.IsNullOrEmpty(request.CityName)
+            ? await GetDataUsingCity(request)
+            : await GetDataUsingPostCode(request);
+
+        return result;
+    }
+
+    private async Task<WeatherDataResponse> GetDataUsingPostCode(WeatherDataRequest request)
+    {
+        var geoConversion = new GeoCodingConversion(_httpClientFactory, _configuration);
+        var conversion = await geoConversion.ConvertUsingPostCode(request);
+        var requestUrl = $"data/2.5/weather?lat={conversion.lat}&lon={conversion.lon}&appid={_openWeatherApiKey}&units=metric";
         var client = CreateClient();
-        
+
         var response = await client.GetAsync(requestUrl);
-        response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();
-        var weatherDataResponse = JsonConvert.DeserializeObject<WeatherDataResponse>(responseBody);
-        
-        return weatherDataResponse;
+
+        return JsonConvert.DeserializeObject<WeatherDataResponse>(responseBody);
+    }
+
+    private async Task<WeatherDataResponse> GetDataUsingCity(WeatherDataRequest request)
+    {
+        var geoConversion = new GeoCodingConversion(_httpClientFactory, _configuration);
+        var conversion = await geoConversion.ConvertUsingLocationName(request);
+        var requestUrl = $"data/2.5/weather?lat={conversion.FirstOrDefault().lat}&lon={conversion.FirstOrDefault().lon}&appid={_openWeatherApiKey}&units=metric";
+        var client = CreateClient();
+
+        var response = await client.GetAsync(requestUrl);
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<WeatherDataResponse>(responseBody);
     }
 }
