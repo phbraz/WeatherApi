@@ -12,7 +12,7 @@ public class MainBase : ControllerBase
         _mediator = mediator;
     }
     
-    public async Task<TResponse> SenQuery<TRequest, TResponse>(TRequest query, CancellationToken cancellationToken) where TRequest 
+    protected async Task<TResponse> SenQuery<TRequest, TResponse>(TRequest query, CancellationToken cancellationToken) where TRequest 
         : IRequest<TResponse>
     {
         return await _mediator.Send(query, cancellationToken);

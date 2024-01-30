@@ -1,17 +1,37 @@
-﻿namespace Application.Queries.WeatherForecast;
+﻿using Application.DataModels;
+using Application.Interfaces;
+using MediatR;
 
-public class GetCurrentForecastQuery
-{
-}
+namespace Application.Queries.WeatherForecast;
 
-public record CurrentForecastSearchParam
+public class GetCurrentForecastQuery : IRequest<WeatherDataResponse>
 {
-    public string? City { get; set; }
-    public string? PostCode { get; set; }
-}
+    public WeatherDataRequest Filters { get; set; }
+};
 
-public record CurrentForecastResponse
+
+public class
+    GetCurrentWeatherForecastQueryHandler : IRequestHandler<GetCurrentForecastQuery, WeatherDataResponse>
 {
-    public string WeatherInfo { get; set; }
-    public string City { get; set; }
+    private readonly IWeatherRequest _weatherRequest;
+
+    public GetCurrentWeatherForecastQueryHandler(IWeatherRequest weatherRequest)
+    {
+        _weatherRequest = weatherRequest;
+    }
+    
+    
+    public async Task<WeatherDataResponse> Handle(GetCurrentForecastQuery request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var weatherData = await _weatherRequest.GetWeatherDataAsync(request.Filters);
+            return weatherData;
+        }
+        catch (Exception e)
+        {
+            throw e;
+        }
+    }
 }

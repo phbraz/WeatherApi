@@ -1,10 +1,12 @@
 ﻿using Application.DataModels;
+using Application.Interfaces;
+using Application.Queries.WeatherForecast;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace Application.Services.OpenWeatherAPI;
 
-public class CurrentWeatherData
+public class CurrentWeatherData : IWeatherRequest
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -23,7 +25,7 @@ public class CurrentWeatherData
         return client;
     }
     
-    public async Task<WeatherDataResponse> GetCurrentWeather(WeatherDataRequest request)
+    public async Task<WeatherDataResponse> GetWeatherDataAsync(WeatherDataRequest request)
     {
         var geoConversion = new GeoCodingConversion(_httpClientFactory, _configuration);
         if (string.IsNullOrEmpty(request.CityName) && string.IsNullOrEmpty(request.CountryCode) && string.IsNullOrEmpty(request.PostCode))
@@ -32,10 +34,10 @@ public class CurrentWeatherData
         }
 
         var conversion = await geoConversion.ConvertUsingLocationName(request.CityName, request.CountryCode);
-
         var openApiKey = _configuration["OpenWeatherAPI:key"];
         var requestUrl = $"data/2.5/weather?lat={conversion.FirstOrDefault().lat}&lon={conversion.FirstOrDefault().lon}&appid={openApiKey}&units=metric";
         var client = CreateClient();
+        
         var response = await client.GetAsync(requestUrl);
         response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();

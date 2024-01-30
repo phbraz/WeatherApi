@@ -1,30 +1,18 @@
 ﻿using Application.DataModels;
+using Application.Queries.WeatherForecast;
 using Application.Services.OpenWeatherAPI;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WeatherAPI.Controllers;
-
-[Route("WeatherForecast")]
-public class WeatherForecastController : ControllerBase
+namespace WeatherAPI.Controllers
 {
-    private readonly CurrentWeatherData _currentWeatherData;
-    public WeatherForecastController(CurrentWeatherData currentWeatherData)
+    [Route("WeatherForecast")]
+    public class WeatherForecastController : MainBase
     {
-        _currentWeatherData = currentWeatherData;
-    }
-    
-    [HttpGet("GetCurrentForecast")]
-    public async Task<WeatherDataResponse> FetchCurrentForecast()
-    {
-        var request = new WeatherDataRequest()
-        {
-            CityName = "Manchester",
-            CountryCode = "GB"
-        };
-
-        var result = await _currentWeatherData.GetCurrentWeather(request);
-
-        return result;
+        public WeatherForecastController(IMediator mediator) : base(mediator) { }
+        
+        [HttpPost("GetCurrentForecast")]
+        public async Task<WeatherDataResponse> FetchCurrentForecast([FromBody] GetCurrentForecastQuery query, CancellationToken token)
+            => await SenQuery<GetCurrentForecastQuery, WeatherDataResponse>(query, token);
     }
 }

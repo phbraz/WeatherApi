@@ -1,4 +1,9 @@
+using System.Net.Mime;
+using Application.DataModels;
+using Application.Interfaces;
+using Application.Queries.WeatherForecast;
 using Application.Services.OpenWeatherAPI;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,10 +12,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-builder.Services.AddScoped<CurrentWeatherData>();
+builder.Services.AddSingleton<IWeatherRequest, CurrentWeatherData>();
+builder.Services.AddScoped<IRequestHandler<GetCurrentForecastQuery, WeatherDataResponse>, GetCurrentWeatherForecastQueryHandler>();
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
-//builder.Services.AddMediatR(typeof(Program).Assembly);
+builder.Services.AddMediatR(config =>
+{
+    config.RegisterServicesFromAssemblies(typeof(MediaTypeNames.Application).Assembly);
+    config.RegisterServicesFromAssemblies(typeof(Program).Assembly);
+});
+
 
 
 var app = builder.Build();
